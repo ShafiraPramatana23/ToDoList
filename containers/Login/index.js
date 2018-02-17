@@ -11,6 +11,7 @@ import {
   TouchableHighlight,
   TouchableOpacity,
 } from 'react-native';
+// import { Container, Header, Content, Item, Input, Button, Text, Body } from 'native-base';
 import { NavigationActions } from 'react-navigation';
 
 export default class Login extends Component {
@@ -19,7 +20,8 @@ export default class Login extends Component {
     this.state = {
       username: null,
       password: null,
-      isLoading: false
+      isLoading: false,
+      isLogin: false,
     }
   }
 
@@ -91,53 +93,69 @@ export default class Login extends Component {
     }
   }
 
+  async getDataLogin() {
+    try {
+      const dataLogin = await AsyncStorage.getItem('Login');
+      if (dataLogin !== null) {
+        console.log(dataLogin);
+        this.setState({ isLogin: true });
+      }
+    } catch (error) {
+      alert(error);
+    }
+  }
+
+  // componentWillMount() {
+  //   this.getDataLogin();
+  // }
+
   render() {
-    const { isLoading } = this.state;
+    const { isLoading, isLogin } = this.state;
     return (
       <View style={style.container}>
         {isLoading == true ? (
-          <ActivityIndicator size="large" />
-        ) : (
-            <View>
-              <View style={{ alignItems:'center', marginBottom:30 }}>
-                <Image
-                  style={style.imageLogo}
-                  source={require('../../assets/todo.png')}
+            <ActivityIndicator size="large" />
+          ) : (
+              <View>
+                <View style={{ alignItems: 'center', marginBottom: 30 }}>
+                  <Image
+                    style={style.imageLogo}
+                    source={require('../../assets/todo.png')}
+                  />
+                </View>
+
+                <TextInput
+                  underlineColorAndroid='transparent'
+                  style={[style.buttonStyle, { marginBottom: 10, textAlign: 'center' }]}
+                  placeholder="Username"
+                  onChangeText={(text) => this.setState({ username: text })}
                 />
-              </View>
+                <TextInput
+                  underlineColorAndroid='transparent'
+                  style={[style.buttonStyle, { marginBottom: 10, textAlign: 'center' }]}
+                  placeholder="Password"
+                  onChangeText={(text) => this.setState({ password: text })}
+                />
 
-              <TextInput
-                underlineColorAndroid='transparent'
-                style={[style.buttonStyle, { marginBottom: 10, textAlign: 'center' }]}
-                placeholder="Username"
-                onChangeText={(text) => this.setState({ username: text })}
-              />
-              <TextInput
-                underlineColorAndroid='transparent'
-                style={[style.buttonStyle, { marginBottom: 10, textAlign: 'center' }]}
-                placeholder="Password"
-                onChangeText={(text) => this.setState({ password: text })}
-              />
-
-              <TouchableOpacity
-                style={[style.buttonStyle,
-                {
-                  backgroundColor: '#5d84c1', alignItems: 'center',
-                  justifyContent: 'center'
-                }]}
-                onPress={() => this.login()}>
-                <Text style={{ fontWeight: 'bold', color: '#FFFFFF' }}>Sign In</Text>
-              </TouchableOpacity>
-
-              <View style={{ marginTop: 20, flexDirection: 'row' }}>
-                <Text>Don't have an account? </Text>
                 <TouchableOpacity
-                  onPress={() => this.props.navigation.navigate('Register')}>
-                  <Text> Sign Up</Text>
+                  style={[style.buttonStyle,
+                  {
+                    backgroundColor: '#5d84c1', alignItems: 'center',
+                    justifyContent: 'center'
+                  }]}
+                  onPress={() => this.login()}>
+                  <Text style={{ fontWeight: 'bold', color: '#FFFFFF' }}>Sign In</Text>
                 </TouchableOpacity>
+
+                <View style={{ marginTop: 20, flexDirection: 'row' }}>
+                  <Text>Don't have an account? </Text>
+                  <TouchableOpacity
+                    onPress={() => this.props.navigation.navigate('Register')}>
+                    <Text> Sign Up</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          )}
+            )}
       </View>
     )
   }

@@ -11,8 +11,10 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
 import ActionButton from 'react-native-action-button';
+import DatePicker from 'react-native-datepicker';
 import Item from './item';
 
 export default class MyComponent extends Component {
@@ -40,7 +42,6 @@ export default class MyComponent extends Component {
   }
 
   addNew() {
-    console.log(this.state.dataLogin);
     const id = this.state.dataLogin._id;
     const status = false;
     const {
@@ -49,32 +50,38 @@ export default class MyComponent extends Component {
       category
     } = this.state;
 
-    const body = {
-      "userId": id,
-      "status": status,
-      "task": task,
-      "dueDate": dueDate,
-      "category": category
-    }
+    if (!task || !dueDate || !category) {
+      alert("Form input is empty");
+    } else {
+      const body = {
+        "userId": id,
+        "status": status,
+        "task": task,
+        "dueDate": dueDate,
+        "category": category
+      }
 
-    fetch('https://ngc-todo.herokuapp.com/api/tasks', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body)
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success == true) {
-          alert(data.message);
-        } else {
-          alert('Add Task Failed');
-        }
+      console.log(body);
+
+      fetch('https://ngc-todo.herokuapp.com/api/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body)
       })
-      .catch((error) => {
-        console.log(error);
-      });
+        .then(response => response.json())
+        .then(data => {
+          if (data.success == true) {
+            alert(data.message);
+          } else {
+            alert('Add Task Failed');
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
   }
 
   getTaskById() {
@@ -90,7 +97,7 @@ export default class MyComponent extends Component {
       .then(data => {
         if (data.success == true) {
           this.setState({ dataTask: data.data })
-          // console.log(this.state.dataTask);
+          console.log("datatask: " + this.state.dataTask);
         } else {
           alert('Can\'t get task');
         }
@@ -100,9 +107,9 @@ export default class MyComponent extends Component {
       });
   }
 
-  deleteTask(data){
-    console.log('datanya: '+JSON.stringify(data));
-    console.log('id yg mau dihapus: '+data._id)
+  deleteTask(data) {
+    console.log('datanya: ' + JSON.stringify(data));
+    console.log('id yg mau dihapus: ' + data._id)
     const url = 'https://ngc-todo.herokuapp.com/api/tasks/' + data._id;
     fetch(url, {
       method: 'DELETE',
@@ -112,23 +119,17 @@ export default class MyComponent extends Component {
     })
       .then(response => response.json())
       .then(data => {
-        console.log('respon delete: '+JSON.stringify(data));
-        // if (data.success == true) {
-        // } else {
-        //   alert('Can\'t get task');
-        // }
+        console.log('respon delete: ' + JSON.stringify(data));
+        if (data.success == true) {
+          alert("Delete successfull");
+          this.getTaskById();
+        } else {
+          alert("Can't delete task");
+        }
       })
       .catch((error) => {
         console.log(error);
       });
-  }
-
-  showCategory() {
-    console.log("masuk show categ")
-    this.setState({
-      isShow: true
-    });
-    console.log("isShow: " + this.state.isShow);
   }
 
   async getDataLogin() {
@@ -138,7 +139,7 @@ export default class MyComponent extends Component {
         this.setState({
           dataLogin: JSON.parse(dataLogin),
         });
-        console.log('datalogin: '+dataLogin)
+        console.log('datalogin: ' + dataLogin)
         this.getTaskById();
       }
     } catch (error) {
@@ -160,57 +161,84 @@ export default class MyComponent extends Component {
           animationType={'slide'}
           onRequestClose={() => this.closeModal()}>
           <View style={style.modalContainer}>
-            <ScrollView keyboardShouldPersistTaps='always'>
-              <TextInput
-                style={style.textInput}
-                placeholder="Title"
-                autoFocus={true}
-                onChangeText={(text) => this.setState({ task: text })}
-              />
-              <TextInput
-                style={style.textInput}
-                placeholder="Due Date"
-                onChangeText={(text) => this.setState({ dueDate: text })}
-              />
-              <TextInput
-                style={style.textInput}
-                placeholder="Category"
-                onChangeText={(text) => this.setState({ category: text })}
-              />
-              <Picker
-                style={{ marginLeft: 25 }}
-                selectedValue={this.state.category}
-                onValueChange={(itemValue, itemIndex) => this.setState({ category: itemValue })}>
-                <Picker.Item label="Choose Category" />
-                <Picker.Item
-                  label="New Category"
-                // {this.showCategory}
+            <ScrollView style={style.scrollModal}>
+              <View style={style.innerContainer}>
+                <TouchableOpacity onPress={() => this.closeModal()}
+                  style={{ alignSelf: 'flex-end', marginRight: 10 }}>
+                  <Image source={require('../../assets/close.png')} />
+                </TouchableOpacity>
+                <Text style={{
+                  marginTop: 20,
+                  marginBottom: 30,
+                  fontWeight: 'bold',
+                  color: '#000000',
+                  fontSize: 20
+                }}>ADD NEW TASK</Text>
+                <TextInput
+                  style={[style.buttonStyle, { textAlign: 'center', marginBottom: 10 }]}
+                  placeholder="Title"
+                  underlineColorAndroid='transparent'
+                  onChangeText={(text) => this.setState({ task: text })}
                 />
-              </Picker>
-              {this.state.isShow == true ? (<Picker
-                style={{ marginLeft: 25 }}
-                selectedValue={this.state.category}
-                onValueChange={(itemValue, itemIndex) => this.setState({ category: itemValue })}>
-                <Picker.Item label="Choose Category" />
-                <Picker.Item
-                  label="New Category"
-                  value={this.showCategory}
-                />
-              </Picker>) : (<View></View>)}
-              <Button
-                onPress={() => this.addNew()}
-                title="Submit" />
+                <View style={[style.buttonStyle, { justifyContent: 'center', marginBottom: 10 }]}>
+                  <DatePicker
+                    style={{ width: 205 }}
+                    date={this.state.dueDate}
+                    mode="date"
+                    format="MM-DD-YYYY"
+                    placeholder="Select Date"
+                    confirmBtnText="Confirm"
+                    cancelBtnText="Cancel"
+                    customStyles={{
+                      dateIcon: {
+                        position: 'absolute',
+                        left: 0,
+                        top: 4,
+                        marginLeft: 0
+                      },
+                      dateInput: {
+                        marginLeft: 36
+                      }
+                    }}
+                    onDateChange={(text) => { this.setState({ dueDate: text }) }}
+                  />
+                </View>
+                <View style={[style.buttonStyle, { justifyContent: 'center', marginBottom: 10 }]}>
+                  <Picker
+                    style={{ marginLeft: 25 }}
+                    selectedValue={this.state.category}
+                    onValueChange={(itemValue, itemIndex) =>
+                      itemValue == "new category" ? this.setState({ isShow: true }) : this.setState({ category: itemValue })}>
+                    <Picker.Item label="Choose Category" />
+                    <Picker.Item
+                      label="New Category"
+                      value="new category"
+                    />
+                  </Picker>
+                </View>
+                {this.state.isShow == true ? (
+                  <View>
+                    <TextInput
+                      style={[style.buttonStyle, { textAlign: 'center', marginBottom: 10 }]}
+                      placeholder="Category"
+                      underlineColorAndroid='transparent'
+                      onChangeText={(text) => this.setState({ category: text })}
+                    />
+                  </View>
+                ) : (<View></View>)}
+                <TouchableOpacity
+                  style={[style.buttonStyle,
+                  {
+                    backgroundColor: '#5d84c1', alignItems: 'center',
+                    justifyContent: 'center'
+                  }]}
+                  onPress={() => this.addNew()}>
+                  <Text style={{ fontWeight: 'bold', color: '#FFFFFF' }}>Submit</Text>
+                </TouchableOpacity>
+              </View>
             </ScrollView>
           </View>
         </Modal>
-
-        <TouchableOpacity style={[style.container, { borderRadius: 10 }]}>
-          <Button
-            style={{ width: 100 }}
-            onPress={() => this.openModal()}
-            title="Add New Task"
-          />
-        </TouchableOpacity>
 
         <FlatList
           data={this.state.dataTask}
@@ -218,11 +246,18 @@ export default class MyComponent extends Component {
           renderItem={({ item }) =>
             <Item
               item={item}
-              onDelete={(item) => {this.deleteTask(item)}}
+              onDelete={(item) => { this.deleteTask(item) }}
             />
           }
           extraData={this.state}
         />
+
+        {/* <TouchableOpacity> */}
+        <ActionButton
+          buttonColor="#748baf"
+          onPress={() => { this.openModal() }}
+        />
+        {/* </TouchableOpacity> */}
       </View>
     );
   }
@@ -235,18 +270,37 @@ const style = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   modalContainer: {
-    marginTop: '40%',
-    marginBottom: 100,
-    paddingTop: '10%',
-    paddingBottom: '10%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0,0,0,0.7)'
+    // marginTop: '40%',
+    // marginBottom: 100,
+    // paddingTop: '10%',
+    // paddingBottom: '10%',
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    // backgroundColor: '#F5FCFF',
   },
   innerContainer: {
+    width: '100%',
+    height: 350,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5FCFF',
+  },
+  scrollModal: {
+    flex: 1,
+    marginTop: '20%',
+    margin: 15,
   },
   textInput: {
     width: 200
-  }
+  },
+  buttonStyle: {
+    borderWidth: 3,
+    borderColor: '#748baf',
+    borderRadius: 14,
+    width: 210,
+    height: 45,
+  },
 });

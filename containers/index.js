@@ -5,19 +5,18 @@ import Register from './Register';
 
 export default StackNavigator({
   Login: {
-    screen: Login
+    screen: Login,
+    navigationOptions: {
+      header: null
+    }
   },
   Home: {
     screen: Todo
   },
   Register: {
-    screen: Register
-  }
-},
-  {
-    headerMode: 'none',
+    screen: Register,
     navigationOptions: {
-      headerVisible: false,
+      title: 'Register'
     }
-   }
-);
+  }
+});

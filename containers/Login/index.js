@@ -114,7 +114,7 @@ export default class Login extends Component {
     return (
       <View style={style.container}>
         {isLoading == true ? (
-            <ActivityIndicator size="large" />
+            <ActivityIndicator size='large' />
           ) : (
               <View>
                 <View style={{ alignItems: 'center', marginBottom: 30 }}>

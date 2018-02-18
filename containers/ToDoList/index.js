@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import ActionButton from 'react-native-action-button';
 import DatePicker from 'react-native-datepicker';
@@ -29,7 +30,9 @@ export default class MyComponent extends Component {
       status: null,
       dataLogin: [],
       dataTask: [],
-      isShow: false
+      isShow: false,
+      isLoading: false,
+      isLoadingAdd: false,
     };
   }
 
@@ -53,6 +56,7 @@ export default class MyComponent extends Component {
     if (!task || !dueDate || !category) {
       alert("Form input is empty");
     } else {
+      this.setState({ isLoadingAdd: true });
       const body = {
         "userId": id,
         "status": status,
@@ -60,8 +64,6 @@ export default class MyComponent extends Component {
         "dueDate": dueDate,
         "category": category
       }
-
-      console.log(body);
 
       fetch('https://ngc-todo.herokuapp.com/api/tasks', {
         method: 'POST',
@@ -73,18 +75,23 @@ export default class MyComponent extends Component {
         .then(response => response.json())
         .then(data => {
           if (data.success == true) {
+            this.setState({ isLoadingAdd: false });
             alert(data.message);
+            this.getTaskById();
           } else {
+            this.setState({ isLoadingAdd: false });
             alert('Add Task Failed');
           }
         })
         .catch((error) => {
+          this.setState({ isLoadingAdd: false });
           console.log(error);
         });
     }
   }
 
   getTaskById() {
+    this.setState({ isLoading: true });
     const id = this.state.dataLogin._id;
     const url = 'https://ngc-todo.herokuapp.com/api/tasks/' + id;
     fetch(url, {
@@ -96,20 +103,20 @@ export default class MyComponent extends Component {
       .then(response => response.json())
       .then(data => {
         if (data.success == true) {
-          this.setState({ dataTask: data.data })
-          console.log("datatask: " + this.state.dataTask);
+          this.setState({ dataTask: data.data, isLoading: false })
         } else {
+          this.setState({ isLoading: false });
           alert('Can\'t get task');
         }
       })
       .catch((error) => {
+        this.setState({ isLoading: false });
         console.log(error);
       });
   }
 
   deleteTask(data) {
-    console.log('datanya: ' + JSON.stringify(data));
-    console.log('id yg mau dihapus: ' + data._id)
+    this.setState({ isLoading: true });
     const url = 'https://ngc-todo.herokuapp.com/api/tasks/' + data._id;
     fetch(url, {
       method: 'DELETE',
@@ -119,15 +126,17 @@ export default class MyComponent extends Component {
     })
       .then(response => response.json())
       .then(data => {
-        console.log('respon delete: ' + JSON.stringify(data));
         if (data.success == true) {
+          this.setState({ isLoading: false });
           alert("Delete successfull");
           this.getTaskById();
         } else {
+          this.setState({ isLoading: false });
           alert("Can't delete task");
         }
       })
       .catch((error) => {
+        this.setState({ isLoading: false });
         console.log(error);
       });
   }
@@ -139,7 +148,6 @@ export default class MyComponent extends Component {
         this.setState({
           dataLogin: JSON.parse(dataLogin),
         });
-        console.log('datalogin: ' + dataLogin)
         this.getTaskById();
       }
     } catch (error) {
@@ -226,38 +234,45 @@ export default class MyComponent extends Component {
                     />
                   </View>
                 ) : (<View></View>)}
-                <TouchableOpacity
-                  style={[style.buttonStyle,
-                  {
-                    backgroundColor: '#5d84c1', alignItems: 'center',
-                    justifyContent: 'center'
-                  }]}
-                  onPress={() => this.addNew()}>
-                  <Text style={{ fontWeight: 'bold', color: '#FFFFFF' }}>Submit</Text>
-                </TouchableOpacity>
+                {this.state.isLoadingAdd == true ? (
+                  <ActivityIndicator size='large' />
+                ) : (
+                    <TouchableOpacity
+                      style={[style.buttonStyle,
+                      {
+                        backgroundColor: '#5d84c1', alignItems: 'center',
+                        justifyContent: 'center'
+                      }]}
+                      onPress={() => this.addNew()}>
+                      <Text style={{ fontWeight: 'bold', color: '#FFFFFF' }}>Submit</Text>
+                    </TouchableOpacity>
+                  )}
               </View>
             </ScrollView>
           </View>
         </Modal>
 
-        <FlatList
-          data={this.state.dataTask}
-          keyExtractor={(x, i) => i}
-          renderItem={({ item }) =>
-            <Item
-              item={item}
-              onDelete={(item) => { this.deleteTask(item) }}
+        {this.state.isLoading == true ? (
+          <ActivityIndicator size='large' style={{ marginTop: 20 }} />
+        ) : (
+            <FlatList
+              data={this.state.dataTask}
+              keyExtractor={(x, i) => i}
+              renderItem={({ item }) =>
+                <Item
+                  item={item}
+                  onDelete={(item) => { this.deleteTask(item) }}
+                  onGet={() => this.getTaskById()}
+                />
+              }
+              extraData={this.state}
             />
-          }
-          extraData={this.state}
-        />
+          )}
 
-        {/* <TouchableOpacity> */}
         <ActionButton
           buttonColor="#748baf"
           onPress={() => { this.openModal() }}
         />
-        {/* </TouchableOpacity> */}
       </View>
     );
   }
@@ -287,6 +302,7 @@ const style = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F5FCFF',
+    borderRadius: 15
   },
   scrollModal: {
     flex: 1,

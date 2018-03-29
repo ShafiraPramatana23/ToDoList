@@ -11,7 +11,10 @@ export default StackNavigator({
     }
   },
   Home: {
-    screen: Todo
+    screen: Todo,
+    navigationOptions: {
+      title: 'ToDo List'
+    }
   },
   Register: {
     screen: Register,

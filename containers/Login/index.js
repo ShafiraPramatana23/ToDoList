@@ -97,65 +97,69 @@ export default class Login extends Component {
     try {
       const dataLogin = await AsyncStorage.getItem('Login');
       if (dataLogin !== null) {
-        console.log(dataLogin);
-        this.setState({ isLogin: true });
+        this.setState({ isShow: false });
+        const resetAction = NavigationActions.reset({
+          index: 0,
+          actions: [NavigationActions.navigate({ routeName: 'Home' })],
+        });
+        this.props.navigation.dispatch(resetAction);
       }
     } catch (error) {
       alert(error);
     }
   }
 
-  // componentWillMount() {
-  //   this.getDataLogin();
-  // }
+  componentDidMount() {
+    this.getDataLogin();
+  }
 
   render() {
     const { isLoading, isLogin } = this.state;
     return (
       <View style={style.container}>
         {isLoading == true ? (
-            <ActivityIndicator size='large' />
-          ) : (
-              <View>
-                <View style={{ alignItems: 'center', marginBottom: 30 }}>
-                  <Image
-                    style={style.imageLogo}
-                    source={require('../../assets/todo.png')}
-                  />
-                </View>
-
-                <TextInput
-                  underlineColorAndroid='transparent'
-                  style={[style.buttonStyle, { marginBottom: 10, textAlign: 'center' }]}
-                  placeholder="Username"
-                  onChangeText={(text) => this.setState({ username: text })}
+          <ActivityIndicator size='large' />
+        ) : (
+            <View>
+              <View style={{ alignItems: 'center', marginBottom: 30 }}>
+                <Image
+                  style={style.imageLogo}
+                  source={require('../../assets/todo.png')}
                 />
-                <TextInput
-                  underlineColorAndroid='transparent'
-                  style={[style.buttonStyle, { marginBottom: 10, textAlign: 'center' }]}
-                  placeholder="Password"
-                  onChangeText={(text) => this.setState({ password: text })}
-                />
-
-                <TouchableOpacity
-                  style={[style.buttonStyle,
-                  {
-                    backgroundColor: '#5d84c1', alignItems: 'center',
-                    justifyContent: 'center'
-                  }]}
-                  onPress={() => this.login()}>
-                  <Text style={{ fontWeight: 'bold', color: '#FFFFFF' }}>Sign In</Text>
-                </TouchableOpacity>
-
-                <View style={{ marginTop: 20, flexDirection: 'row' }}>
-                  <Text>Don't have an account? </Text>
-                  <TouchableOpacity
-                    onPress={() => this.props.navigation.navigate('Register')}>
-                    <Text> Sign Up</Text>
-                  </TouchableOpacity>
-                </View>
               </View>
-            )}
+
+              <TextInput
+                underlineColorAndroid='transparent'
+                style={[style.buttonStyle, { marginBottom: 10, textAlign: 'center' }]}
+                placeholder="Username"
+                onChangeText={(text) => this.setState({ username: text })}
+              />
+              <TextInput
+                underlineColorAndroid='transparent'
+                style={[style.buttonStyle, { marginBottom: 10, textAlign: 'center' }]}
+                placeholder="Password"
+                onChangeText={(text) => this.setState({ password: text })}
+              />
+
+              <TouchableOpacity
+                style={[style.buttonStyle,
+                {
+                  backgroundColor: '#5d84c1', alignItems: 'center',
+                  justifyContent: 'center'
+                }]}
+                onPress={() => this.login()}>
+                <Text style={{ fontWeight: 'bold', color: '#FFFFFF' }}>Sign In</Text>
+              </TouchableOpacity>
+
+              <View style={{ marginTop: 20, flexDirection: 'row' }}>
+                <Text>Don't have an account? </Text>
+                <TouchableOpacity
+                  onPress={() => this.props.navigation.navigate('Register')}>
+                  <Text> Sign Up</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
       </View>
     )
   }

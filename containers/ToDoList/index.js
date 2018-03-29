@@ -33,7 +33,14 @@ export default class MyComponent extends Component {
       isShow: false,
       isLoading: false,
       isLoadingAdd: false,
+      categoryLocal: []
     };
+
+    // for (i = 0; i < this.state.dataTask.length; i++) {
+    //   const categ = this.state.dataTask[i].category;
+    //   this.state.categoryLocal.push({categ});
+    // }
+    // console.log(this.state.categoryLocal);
   }
 
   openModal() {
@@ -41,7 +48,7 @@ export default class MyComponent extends Component {
   }
 
   closeModal() {
-    this.setState({ modalVisible: false });
+    this.setState({ modalVisible: false, isShow: false });
   }
 
   addNew() {
@@ -57,6 +64,10 @@ export default class MyComponent extends Component {
       alert("Form input is empty");
     } else {
       this.setState({ isLoadingAdd: true });
+
+      const categoryData = this.state.categoryLocal;
+      categoryData.push({ category });
+
       const body = {
         "userId": id,
         "status": status,
@@ -78,6 +89,7 @@ export default class MyComponent extends Component {
             this.setState({ isLoadingAdd: false });
             alert(data.message);
             this.getTaskById();
+            this.saveDataStorage(data.data);
           } else {
             this.setState({ isLoadingAdd: false });
             alert('Add Task Failed');
@@ -87,6 +99,19 @@ export default class MyComponent extends Component {
           this.setState({ isLoadingAdd: false });
           console.log(error);
         });
+    }
+  }
+
+  async saveDataStorage(data) {
+    try {
+      AsyncStorage.getItem('DataTask')
+        .then(task => {
+          task = task == null ? [] : JSON.parse(task);
+          task.push(data);
+          return AsyncStorage.setItem('DataTask', JSON.stringify(task));
+        })
+    } catch (error) {
+      alert("Error: " + error);
     }
   }
 
@@ -103,10 +128,9 @@ export default class MyComponent extends Component {
       .then(response => response.json())
       .then(data => {
         if (data.success == true) {
-          this.setState({ dataTask: data.data, isLoading: false })
+          this.setState({ dataTask: data.data, isLoading: false });
         } else {
           this.setState({ isLoading: false });
-          alert('Can\'t get task');
         }
       })
       .catch((error) => {
@@ -117,28 +141,52 @@ export default class MyComponent extends Component {
 
   deleteTask(data) {
     this.setState({ isLoading: true });
-    const url = 'https://ngc-todo.herokuapp.com/api/tasks/' + data._id;
-    fetch(url, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success == true) {
-          this.setState({ isLoading: false });
-          alert("Delete successfull");
-          this.getTaskById();
-        } else {
-          this.setState({ isLoading: false });
-          alert("Can't delete task");
-        }
-      })
-      .catch((error) => {
-        this.setState({ isLoading: false });
-        console.log(error);
-      });
+
+    const idTask = data._id;
+    this.removeDataTask(idTask);
+
+    // const url = 'https://ngc-todo.herokuapp.com/api/tasks/' + idTask;
+    // fetch(url, {
+    //   method: 'DELETE',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   }
+    // })
+    //   .then(response => response.json())
+    //   .then(data => {
+    //     if (data.success == true) {
+    //       this.setState({ isLoading: false });
+    //       alert("Delete successfull");
+    //       this.getTaskById();
+    //     } else {
+    //       this.setState({ isLoading: false });
+    //       alert("Can't delete task");
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     this.setState({ isLoading: false });
+    //     console.log(error);
+    //   });
+  }
+
+  async removeDataTask(id) {
+    console.log("id1: " + id);
+
+    try {
+      const dt = await AsyncStorage.getItem('DataTask');
+      console.log(dt);
+      AsyncStorage.getItem('DataTask')
+        .then(task => {
+          console.log("id2: " + JSON.parse(task._id));
+          const index = task.findIndex(function (o) {
+            return o._id === id;
+          })
+          task.splice(index, 1);
+          return AsyncStorage.setItem('DataTask', JSON.stringify(task));
+        })
+    } catch (error) {
+      console.log("Error remove: " + error);
+    }
   }
 
   async getDataLogin() {
@@ -150,17 +198,60 @@ export default class MyComponent extends Component {
         });
         this.getTaskById();
       }
+
+      const dtTask = await AsyncStorage.getItem('DataTask');
+      console.log(dtTask);
     } catch (error) {
       alert(error);
     }
   }
 
+  static navigationOptions = ({ navigation }) => {
+    const params = navigation.state.params || {};
+
+    return {
+      headerRight: (
+        <TouchableOpacity onPress={params.logout}>
+          <Image source={require('../../assets/logout.png')} style={{ marginRight: 10 }} />
+        </TouchableOpacity>
+      ),
+    };
+  };
+
+  async removeLogin() {
+    // alert("logout")
+    try {
+      await AsyncStorage.removeItem('Login');
+      const value = await AsyncStorage.getItem('Login');
+      console.log("hasilnya: " + value);
+      // this.setState({ dataLogin: [] });
+      // this.props.navigation.navigate('Login');      
+      this.navigate('Login');
+    } catch (error) {
+      console.log("Error resetting data" + error);
+    }
+  }
+
+  loadCategories() {
+    return this.state.categoryLocal.map(categ => (
+      <Picker.Item label={categ.category} value={categ.category} />
+    ));
+  }
+
   componentWillMount() {
     this.getDataLogin();
+    // this.props.navigation.setParams({ logout: this.removeLogin });
+  }
+
+  componentDidMount() {
+    this.props.navigation.setParams({
+      logout: this.removeLogin.bind(this)
+    });
   }
 
   render() {
     const { task, dueDate } = this.state;
+
     return (
       <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
         <Modal
@@ -218,6 +309,7 @@ export default class MyComponent extends Component {
                     onValueChange={(itemValue, itemIndex) =>
                       itemValue == "new category" ? this.setState({ isShow: true }) : this.setState({ category: itemValue })}>
                     <Picker.Item label="Choose Category" />
+                    {this.loadCategories()}
                     <Picker.Item
                       label="New Category"
                       value="new category"
@@ -288,17 +380,10 @@ const style = StyleSheet.create({
     width: '100%',
     height: '100%',
     backgroundColor: 'rgba(0,0,0,0.7)'
-    // marginTop: '40%',
-    // marginBottom: 100,
-    // paddingTop: '10%',
-    // paddingBottom: '10%',
-    // justifyContent: 'center',
-    // alignItems: 'center',
-    // backgroundColor: '#F5FCFF',
   },
   innerContainer: {
     width: '100%',
-    height: 350,
+    height: 400,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F5FCFF',

@@ -225,8 +225,7 @@ export default class MyComponent extends Component {
       const value = await AsyncStorage.getItem('Login');
       console.log("hasilnya: " + value);
       // this.setState({ dataLogin: [] });
-      // this.props.navigation.navigate('Login');      
-      this.navigate('Login');
+      this.props.navigation.navigate('Login');
     } catch (error) {
       console.log("Error resetting data" + error);
     }
